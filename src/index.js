@@ -20,4 +20,5 @@ const element = (
   </div>
 );
 const container = document.getElementById('root');
+console.log('we should be running here');
 C5DOM.render(element, container);
