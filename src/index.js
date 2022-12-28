@@ -18,29 +18,29 @@ document.body.appendChild(root);
 //   console.log('i have been pressed');
 // };
 
-const updateValue = (e) => {
-  rerender(e.target.value);
-};
+// const updateValue = (e) => {
+//   rerender(e.target.value);
+// };
 
 const container = document.getElementById('root');
 
-const handleClick = (e) => {
-  console.log('i have been clicked', e);
-};
+// const handleClick = (e) => {
+//   console.log('i have been clicked', e);
+// };
 
-const rerender = (value) => {
-  const element = (
-    <div>
-      <input onInput={updateValue} value={value} />
-      <h2>Hello {value}</h2>
-      <button onClick={handleClick}>Press Me</button>
-    </div>
-  );
+// const rerender = (value) => {
+//   const element = (
+//     <div>
+//       <input onInput={updateValue} value={value} />
+//       <h2>Hello {value}</h2>
+//       <button onClick={handleClick}>Press Me</button>
+//     </div>
+//   );
 
-  C5DOM.render(element, container);
-};
+//   C5DOM.render(element, container);
+// };
 
-rerender('world');
+// rerender('world');
 
 // const element = (
 //   <div style="background: salmon; padding: 5px;">
@@ -52,3 +52,10 @@ rerender('world');
 // const container = document.getElementById('root');
 // console.log('we should be running here');
 // C5DOM.render(element, container);
+
+const App = (props) => {
+  return <h1>hi {props.name}</h1>;
+};
+
+const element = <App name="foo" />;
+C5DOM.render(element, container);
