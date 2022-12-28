@@ -12,9 +12,7 @@ function render(element, container) {
       dom[name] = element.props[name];
     });
 
-  element.props.children.forEach((child) => {
-    render(child, dom);
-  });
+  element.props.children.forEach((child) => render(child, dom));
 
   container.appendChild(dom);
 }
