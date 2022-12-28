@@ -13,7 +13,6 @@ child.innerHTML = 'Hello';
 main.appendChild(child);
 root.appendChild(main);
 
-/** @jsx C5.createElement */
 const element = (
   <div style="background: salmon">
     <h1>Hello World</h1>
