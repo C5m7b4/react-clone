@@ -14,22 +14,47 @@ function createDom(fiber) {
   return dom;
 }
 
+function commitRoot() {
+  console.log('committing root');
+  commitWork(wipRoot.child);
+  currentRoot = wipRoot;
+  wipRoot = null;
+}
+
+function commitWork(fiber) {
+  if (!fiber) {
+    return;
+  }
+  const domParent = fiber.parent.dom;
+  domParent.appendChild(fiber.dom);
+  commitWork(fiber.child);
+  commitWork(fiber.sibling);
+}
+
 function render(element, container) {
-  nextUnitOfWork = {
+  wipRoot = {
     dom: container,
     props: {
       children: [element],
     },
+    alternate: currentRoot,
   };
+  nextUnitOfWork = wipRoot;
 }
 
 let nextUnitOfWork = null;
+let currentRoot = null;
+let wipRoot = null;
 
 function workLoop(deadline) {
   let shouldYield = false;
   while (nextUnitOfWork && !shouldYield) {
     nextUnitOfWork = performUnitOfWork(nextUnitOfWork);
     shouldYield = deadline.timeRemaining() < 1;
+  }
+
+  if (!nextUnitOfWork && wipRoot) {
+    commitRoot();
   }
 
   requestIdleCallback(workLoop);
@@ -40,7 +65,7 @@ requestIdleCallback(workLoop);
 function performUnitOfWork(fiber) {
   console.log('performUnitOfWork', fiber);
   if (!fiber.dom) {
-    fiber.com = createDom(fiber);
+    fiber.dom = createDom(fiber);
   }
 
   // if (fiber.parent) {
