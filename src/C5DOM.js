@@ -1,31 +1,34 @@
-function render(element, container) {
+function createDom(fiber) {
   const dom =
-    element.type == 'TEXT_ELEMENT'
+    fiber.type == 'TEXT_ELEMENT'
       ? document.createTextNode('')
-      : document.createElement(element.type);
-  container.appendChild(dom);
+      : document.createElement(fiber.type);
 
   const isProperty = (key) => key !== 'children';
-  Object.keys(element.props)
+  Object.keys(fiber.props)
     .filter(isProperty)
     .forEach((name) => {
-      dom[name] = element.props[name];
+      dom[name] = fiber.props[name];
     });
 
-  element.props.children.forEach((child) => render(child, dom));
+  return dom;
+}
 
-  container.appendChild(dom);
+function render(element, container) {
+  nextUnitOfWork = {
+    dom: container,
+    props: {
+      children: [element],
+    },
+  };
 }
 
 let nextUnitOfWork = null;
 
 function workLoop(deadline) {
   let shouldYield = false;
-  // while (nextUnitOfWork && !shouldYield) {
-  //   nextUnitOfWork = performUnitOfWork(nextUnitOfWork);
-  //   shouldYield = deadline.timeRemaining() < 1;
-  // }
   while (nextUnitOfWork && !shouldYield) {
+    nextUnitOfWork = performUnitOfWork(nextUnitOfWork);
     shouldYield = deadline.timeRemaining() < 1;
   }
 
@@ -35,7 +38,9 @@ function workLoop(deadline) {
 requestIdleCallback(workLoop);
 
 function performUnitOfWork(nextUnitOfwork) {
-  // ToDo
+  // ToDo add dom node
+  // ToDo create new fibers
+  // ToDo return next unit of work
 }
 
 const C5DOM = {
