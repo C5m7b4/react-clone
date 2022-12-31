@@ -10,7 +10,7 @@ function createDom(fiber) {
 }
 
 function commitRoot() {
-  console.log('committing root');
+  //console.log('committing root');
   deletions.forEach(commitWork);
   commitWork(wipRoot.child);
   currentRoot = wipRoot;
@@ -23,7 +23,7 @@ const isNew = (prev, next) => (key) => prev[key] !== next[key];
 const isGone = (prev, next) => (key) => !(key in next);
 
 function updateDom(dom, prevProps, nextProps) {
-  console.log('updating the dom');
+  //console.log('updating the dom');
   // remove old or changed event listeners
   Object.keys(prevProps)
     .filter(isEvent)
@@ -61,6 +61,26 @@ function updateDom(dom, prevProps, nextProps) {
     });
 }
 
+function cancelEffects(fiber) {
+  if (fiber.hooks) {
+    fiber.hooks
+      .filter((hook) => hook.tag === 'effect' && hook.cancel)
+      .forEach((effectHook) => {
+        effectHook.cancel();
+      });
+  }
+}
+
+function runEffects(fiber) {
+  if (fiber.hooks) {
+    fiber.hooks
+      .filter((hook) => hook.tag === 'effect' && hook.effect)
+      .forEach((effectHook) => {
+        effectHook.cancel = effectHook.effect();
+      });
+  }
+}
+
 function commitWork(fiber) {
   if (!fiber) {
     return;
@@ -72,11 +92,19 @@ function commitWork(fiber) {
   }
   const domParent = domParentFiber.dom;
 
-  if (fiber.effectTag === 'PLACEMENT' && fiber.dom != null) {
-    domParent.appendChild(fiber.dom);
-  } else if (fiber.effectTag === 'UPDATE' && fiber.dom != null) {
-    updateDom(fiber.dom, fiber.alternate.props, fiber.props);
+  if (fiber.effectTag === 'PLACEMENT') {
+    if (fiber.dom != null) {
+      domParent.appendChild(fiber.dom);
+    }
+    runEffects(fiber);
+  } else if (fiber.effectTag === 'UPDATE') {
+    cancelEffects(fiber);
+    if (fiber.dom != null) {
+      updateDom(fiber.dom, fiber.alternate.props, fiber.props);
+    }
+    runEffects(fiber);
   } else if (fiber.effectTag === 'DELETION') {
+    cancelEffects(fiber);
     commitDeletion(fiber, domParent);
   }
   commitWork(fiber.child);
@@ -125,7 +153,7 @@ function workLoop(deadline) {
 requestIdleCallback(workLoop);
 
 function performUnitOfWork(fiber) {
-  console.log('performUnitOfWork', fiber);
+  //console.log('performUnitOfWork', fiber);
   // if (!fiber.dom) {
   //   fiber.dom = createDom(fiber);
   // }
@@ -248,6 +276,33 @@ export function useState(initial) {
   wipFiber.hooks.push(hook);
   hookIndex++;
   return [hook.state, setState];
+}
+
+const hasDepsChanged = (prevDeps, nextDeps) => {
+  return (
+    !prevDeps ||
+    !nextDeps ||
+    prevDeps.length !== nextDeps.length ||
+    prevDeps.some((dep, index) => dep !== nextDeps[index])
+  );
+};
+
+export function useEffect(effect, deps) {
+  const oldHook =
+    wipFiber.alternate &&
+    wipFiber.alternate.hooks &&
+    wipFiber.alternate.hooks[hookIndex];
+
+  const hasChanged = hasDepsChanged(oldHook ? oldHook.deps : undefined, deps);
+
+  const hook = {
+    tag: 'effect',
+    effect: hasChanged && oldHook && oldHook.cancel,
+    deps,
+  };
+
+  wipFiber.hooks.push(hook);
+  hookIndex++;
 }
 
 const C5DOM = {
